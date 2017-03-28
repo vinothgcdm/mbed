@@ -12,5 +12,6 @@ enum {
 static Serial pc(USBTX, USBRX, 115200);
 
 int led_test(void);
+int key_test(void);
 
 #endif

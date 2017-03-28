@@ -8,7 +8,7 @@ struct diag_menu {
 };
 
 struct diag_menu menu[] = {{"1", "Test of DGB LEDs", led_test},
-			   // {"2", "Test of Key", key_test},
+			   {"2", "Test of Key", key_test},
 			   // {"3", "Test of Bluetooth", bluetooth_test},
 			   // {"4", "Test of SD-card", sdcard_test},
 			   // {"5", "Test of USB-Host", usb_host_test},
