@@ -10,12 +10,12 @@ struct diag_menu {
 struct diag_menu menu[] = {{"1", "Test of DGB LEDs", led_test},
 			   {"2", "Test of Key", key_test},
 			   // {"3", "Test of Bluetooth", bluetooth_test},
-			   // {"4", "Test of SD-card", sdcard_test},
+			   {"4", "Test of SD-card", sdcard_test},
 			   // {"5", "Test of USB-Host", usb_host_test},
-			   // {"6", "Test of I/O Connector", io_conn_test},
-			   // {"7", "Test of WiFi", wifi_test},
-			   // {"8", "Test of OneWire", one_wire_test},
-			   // {"9", "Test of EEPROM", eeprom_test},
+			   {"6", "Test of I/O Connector", io_conn_test},
+			   {"7", "Test of WiFi", wifi_test},
+			   {"8", "Test of OneWire", one_wire_test},
+			   {"9", "Test of EEPROM", eeprom_test},
 			   // {"a", "Test of Connector-loopback", eth_conn_loopback_test},
 			   // {"b", "Test of PHY-loopback", eth_phy_loopback_test}
 };
