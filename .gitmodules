@@ -1,3 +1,6 @@
 [submodule "mbed-os"]
 	path = mbed-os
 	url = https://github.com/ARMmbed/mbed-os.git
+[submodule "esp8266/esp8266-driver"]
+	path = esp8266/esp8266-driver
+	url = https://github.com/ARMmbed/esp8266-driver
