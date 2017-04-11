@@ -1,0 +1,90 @@
+#include "mbed.h"
+#include "EthernetInterface.h"
+#include "HTTPClient.h"
+#include "NetworkStack.h"
+#include "lwip_stack.h"
+#include "rtos.h"
+
+// #include "SDBlockDevice.h"
+// #include "FATFileSystem.h"
+
+// #define UPDATE_FILE "/sd/blinky.bin"
+
+// SDBlockDevice sd(PTE3, PTE1, PTE2, PTE4);
+// FATFileSystem fs("sd");
+
+// void cb(char *buf, uint32_t len)
+// {
+//     static uint32_t sum = 0;
+//     static FILE *file = NULL;
+//     int ret;
+    
+//     sd.init();
+//     fs.mount(&sd);
+
+//     file = fopen(UPDATE_FILE, "a");
+//     if (file != NULL) {
+//         ret = fwrite(buf, 1, len, file);
+//         if (ret < 0) {
+//             printf("EOF or Error...!\r\n");
+//             sum = 0;
+//             return;
+//         } else {
+//             sum += ret;
+//         }
+//         printf("Written %d bytes\r\n", sum);
+//         fclose(file);
+//     } else {
+//         printf("Error on fopen\r\n");
+//     }
+    
+//     fs.unmount();
+//     sd.deinit();
+// }
+
+// void http_client(void const *args) {
+//     char str[512];
+//     //char buff[] = "http://developer.mbed.org/media/uploads/mbed_official/hello.txt";
+//     char buff[] = "http://172.16.0.236/blinky.bin";
+//     int ret;
+//     float sdata;
+
+//     HTTPClient http(nsapi_create_stack(&lwip_stack), cb);
+//     printf("Fetching data from server...\r\n");
+//     ret = http.get(buff, str, sizeof(str));
+//     if (!ret)
+//         printf("Data fetched successfully...\r\n\r\n");
+//     else
+//         printf("HTTP Error:: ret = %d\r\nHTTP Error:: return code = %d\r\n",
+//                ret, http.getHTTPResponseCode());
+// }
+
+int main(void)
+{
+    int ret;
+    char str[512];
+    
+    printf("============== HTTPS Example ===============\r\n");
+    EthernetInterface net;
+
+    printf("Connecting IP...\r\n");
+    net.connect();
+    printf("Getting IP address....\r\n");
+    printf("IP address is: %s\r\n", net.get_ip_address());
+
+    // Thread thread(http_client, NULL, osPriorityNormal, 20000);
+    // char buff[] = "http://developer.mbed.org/media/uploads/mbed_official/hello.txt";
+    char buff[] = "http://172.16.0.236/blinky.bin";
+    HTTPClient http(nsapi_create_stack(&lwip_stack));
+    HTTPFlash flash(0x80000);
+    printf("Fetching data from server...\r\n");
+    ret = http.get(buff, &flash);
+    if (!ret)
+        printf("Data fetched successfully...\r\n\r\n");
+    else
+        printf("HTTP Error:: ret = %d\r\nHTTP Error:: return code = %d\r\n",
+               ret, http.getHTTPResponseCode());
+
+    NVIC_SystemReset();
+    return 0;
+}
