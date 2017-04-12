@@ -17,6 +17,11 @@
 
 HTTPFlash::HTTPFlash(uint32_t addr)
 {
+    if (addr < 0x20000) {
+        ERR("Wrong download area address\r\n");
+        return;
+    }
+
     flash.init();
     this->addr = addr;
     this->sector_size = flash.get_sector_size(addr);
@@ -30,21 +35,27 @@ void HTTPFlash::writeReset() {}
 
 void HTTPFlash::write_success_flag(void)
 {
-    char flag[512] = {0x00, 0x11, 0x22, 0x33, 0x44};
-    flash.program(flag, this->addr, sizeof(flag));
+    uint32_t flag[128] = {0x55CC55CC, (this->addr + 512), this->data_len};
+    flash.program(flag, this->addr, 512);
+    uint32_t *tmp = (uint32_t *)this->addr;
 }
 
 int HTTPFlash::write(const char* buf, size_t len)
 {
     static uint32_t byte_count = 0;
     static uint32_t page_count = 1;
+    uint32_t fifo_len;
+    uint32_t ret;
+    char data[512] = {0};
     
     fifo.fifo_write(buf, len);
     byte_count += len;
-    uint32_t fifo_len = fifo.fifo_get_len();
-    if ((fifo_len >= 512) || (byte_count == data_len)) {
-        char data[512];
-        uint32_t ret = fifo.fifo_read(data, sizeof(data));
+    fifo_len = fifo.fifo_get_len();
+    if (fifo_len >= 512) {
+        // printf("fifo_len: %d\r\n", fifo.fifo_get_len());
+        // if (byte_count == data_len)
+        //     printf("============== LAST READ\r\n");
+        ret = fifo.fifo_read(data, sizeof(data));
         DBG("Page write: %lu[%p] - %lu bytes\r\n", page_count,
             (uint8_t *)this->addr + (page_count * 512), ret);
         flash.program(data, this->addr + (page_count * 512), 512);
@@ -52,10 +63,18 @@ int HTTPFlash::write(const char* buf, size_t len)
     }
 
     if (byte_count == data_len) {
+        while (0 != fifo.fifo_get_len()) {
+            memset(data, 0xFF, sizeof(data));
+            ret = fifo.fifo_read(data, sizeof(data));
+            DBG("Page write: %lu[%p] - %lu bytes\r\n", page_count,
+                (uint8_t *)this->addr + (page_count * 512), ret);
+            flash.program(data, this->addr + (page_count * 512), 512);
+            page_count++;
+        }
         DBG("All byte received\r\n");
         write_success_flag();
     }
-        
+
     return len;
 }
 

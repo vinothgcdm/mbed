@@ -1,13 +1,19 @@
-BOARD?=K64F
+all: blinky
+	cp ../BUILD/K64F/GCC_ARM/blinky.bin blinky.bin
 
-all:
-	mbed compile -t GCC_ARM -m $(BOARD) --source . --source ../mbed-os/
+blinky: bootloader
+	rm -fr ../BUILD
+	make -C blinky
 
-cbuild:
-	mbed compile -t GCC_ARM -m $(BOARD) --source . --source ../mbed-os/ -c
-
-flash:
-	cp ../BUILD/K64F/GCC_ARM/FOTA-demo.bin /media/vinoth/MBED
+bootloader: clean
+	make -C bootloader
+	cp ../BUILD/K64F/GCC_ARM/bootloader.bin .
 
 clean:
 	rm -fr ../BUILD
+	find . -name "*.bin" -exec rm {} ";"
+
+flash:
+	cp blinky.bin /media/vinoth/MBED/
+
+.PHONY: all blinky bootloader clean
