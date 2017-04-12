@@ -1,2 +1,7 @@
 .build
 .mbed
+*~
+*.bin
+mbed_settings.py
+mbed_settings.pyc
+BUILD
