@@ -2,7 +2,7 @@
 #define HTTPFLASH_H
 #include <mbed.h>
 #include "../IHTTPData.h"
-#include "fifo.h"
+#include "FIFO.h"
 
 class HTTPFlash : public IHTTPDataIn {
 public:
@@ -21,9 +21,9 @@ private:
         uint32_t addr;
         uint32_t sector_size;
         uint32_t data_len;
-	char buf[1024];
 	FlashIAP flash;
-	fifo_t fifo;
+	char buf[1024];
+	FIFO fifo = FIFO(buf, sizeof(buf));
 };
 
 #endif

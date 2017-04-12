@@ -7,7 +7,7 @@ cbuild:
 	mbed compile -t GCC_ARM -m $(BOARD) --source . --source ../mbed-os/ -c
 
 flash:
-	cp ../BUILD/K64F/GCC_ARM/eth-down.bin /media/vinoth/MBED
+	cp ../BUILD/K64F/GCC_ARM/FOTA-demo.bin /media/vinoth/MBED
 
 clean:
 	rm -fr ../BUILD

@@ -12,16 +12,16 @@ int fun(void)
 
     for (i = 0; i < 512; i++) {
         printf("%02X ", *(addr++));
-        if (((i + 1) % 16) == 0)
+        if (((i + 1) % 32) == 0)
             printf("\r\n");
     }
     printf("\r\n");
 
-    for (j = 1; j <= 17; j++) {
-        printf("page %d[%p]\r\n", j, addr);
+    for (j = 1; j <= 25; j++) {
+        printf("page %lu[%p]\r\n", j, (uint8_t *)addr);
         for (i = 0; i < 512; i++) {
             printf("%c ", *(addr++));
-            if (((i + 1) % 16) == 0)
+            if (((i + 1) % 32) == 0)
                 printf("\r\n");
         }
         printf("\r\n");
