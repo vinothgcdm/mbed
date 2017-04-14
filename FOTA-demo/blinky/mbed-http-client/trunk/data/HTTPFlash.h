@@ -2,7 +2,7 @@
 #define HTTPFLASH_H
 #include <mbed.h>
 #include "../IHTTPData.h"
-#include "FIFO.h"
+#include "../flash-iap-wrapper/FlashIAPWrapper.h"
 
 class HTTPFlash : public IHTTPDataIn {
 public:
@@ -16,14 +16,8 @@ protected:
 	virtual void setIsChunked(bool chunked);
 	virtual void setDataLen(size_t len);
 private:
-	void write_success_flag(void);
-
         uint32_t addr;
-        uint32_t sector_size;
-        uint32_t data_len;
-	FlashIAP flash;
-	char buf[1024];
-	FIFO fifo = FIFO(buf, sizeof(buf));
+	FlashIAPWrapper *flash;
 };
 
 #endif
