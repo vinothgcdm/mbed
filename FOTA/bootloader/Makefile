@@ -5,6 +5,3 @@ all:
 
 clean:
 	rm -fr ../../BUILD
-
-flash:
-	cp ../BUILD/$(BOARD)/GCC_ARM/bootloader.bin 
