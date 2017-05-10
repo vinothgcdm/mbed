@@ -140,11 +140,24 @@ eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegi
 }
 
 
+#define COIL_START 0
+#define COIL_NREGS 1
+
 eMBErrorCode
 eMBRegCoilsCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
                eMBRegisterMode eMode )
 {
-    return MB_ENOREG;
+    eMBErrorCode eStatus = MB_ENOERR;
+
+    --usAddress;
+    if ((usAddress >= COIL_START) &&
+        (usAddress + usNCoils) <= COIL_START + COIL_NREGS) {
+        led = pucRegBuffer[0] & 0x01;
+    } else {
+        eStatus = MB_ENOREG;
+    }
+    
+    return eStatus;
 }
 
 eMBErrorCode
