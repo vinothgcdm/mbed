@@ -24,7 +24,7 @@ HTTP Client header file
 #ifndef HTTP_CLIENT_H
 #define HTTP_CLIENT_H
 
-#include "TCPSocketConnection.h"
+#include "TCPSocket.h"
 
 #define HTTP_CLIENT_DEFAULT_TIMEOUT 15000
 
@@ -58,6 +58,7 @@ class HTTPClient
 public:
     ///Instantiate the HTTP client
     HTTPClient();
+    HTTPClient(NetworkStack *stack);
     ~HTTPClient();
 
     /// Get the text form of the error number
@@ -186,7 +187,8 @@ private:
     int base64enc(const char *input, unsigned int length, char *output, int len);
 
     //Parameters
-    TCPSocketConnection m_sock;
+    TCPSocket m_sock;
+    NetworkStack *m_stack;
 
     int m_timeout;
 

@@ -52,8 +52,6 @@
 
 #include "HTTPClient.h"
 
-// FIXME: If there is no stack, how will the socket be constructed?
-
 HTTPClient::HTTPClient() :
     m_sock(), m_stack(), m_basicAuthUser(NULL), m_basicAuthPassword(NULL),
     m_nCustomHeaders(0), m_httpResponseCode(0),
@@ -568,8 +566,6 @@ HTTPResult HTTPClient::recv(char* buf, size_t minLen, size_t maxLen, size_t* pRe
 
       if (ret > 0) {
         readLen += ret;
-      } else if (ret == 0) {
-        break;
       } else {
         if ((ret == NSAPI_ERROR_NO_CONNECTION) || (ret == NSAPI_ERROR_WOULD_BLOCK)) {
           break;

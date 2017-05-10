@@ -18,7 +18,7 @@
  */
 
 #include "HTTPText.h"
-#include "mbed.h"
+
 #include <cstring>
 
 #define OK 0
@@ -79,7 +79,6 @@ HTTPText::HTTPText(char* str, size_t size) : m_str(str), m_size(size), m_pos(0)
 /*virtual*/ int HTTPText::write(const char* buf, size_t len)
 {
     size_t writeLen = MIN(len, m_size - 1 - m_pos);
-printf("===> %d\r\n", writeLen);
     memcpy(m_str + m_pos, buf, writeLen);
     m_pos += writeLen;
     m_str[m_pos] = '\0';
@@ -88,17 +87,17 @@ printf("===> %d\r\n", writeLen);
 
 /*virtual*/ void HTTPText::setDataType(const char* type) //Internet media type from Content-Type header
 {
-    printf("===============> SetDataType: [%s]\r\n", type);
+
 }
 
 /*virtual*/ void HTTPText::setIsChunked(bool chunked) //From Transfer-Encoding header
 {
-    printf("===============> setIsChunked: [%d]\r\n", chunked);
+
 }
 
 /*virtual*/ void HTTPText::setDataLen(size_t len) //From Content-Length header, or if the transfer is chunked, next chunk length
 {
-    printf("===============> setDataLen: [%d]\r\n", len);
+
 }
 
 

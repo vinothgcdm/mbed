@@ -53,7 +53,15 @@
 #include "HTTPClient.h"
 
 HTTPClient::HTTPClient() :
-    m_sock(), m_basicAuthUser(NULL), m_basicAuthPassword(NULL),
+    m_sock(), m_stack(), m_basicAuthUser(NULL), m_basicAuthPassword(NULL),
+    m_nCustomHeaders(0), m_httpResponseCode(0),
+    m_maxredirections(1), m_location(NULL)
+{
+
+}
+
+HTTPClient::HTTPClient(NetworkStack *stack) :
+    m_sock(), m_stack(stack), m_basicAuthUser(NULL), m_basicAuthPassword(NULL),
     m_nCustomHeaders(0), m_httpResponseCode(0),
     m_maxredirections(1), m_location(NULL)
 {
@@ -206,9 +214,7 @@ HTTPResult HTTPClient::connect(const char* url, HTTP_METH method, IHTTPDataOut* 
             return res;
         }
 
-        if(port == 0) { //TODO do handle HTTPS->443
-            port = 80;
-        }
+        port = strcmp(scheme, "https") ? 80 : 443;
 
         DBG("Scheme: %s", scheme);
         DBG("Host: %s", host);
@@ -217,11 +223,12 @@ HTTPResult HTTPClient::connect(const char* url, HTTP_METH method, IHTTPDataOut* 
 
         //Connect
         DBG("Connecting socket to server");
+        m_sock.open(m_stack);
         ret = m_sock.connect(host, port);
-        if (ret < 0) {
-            m_sock.close();
-            ERR("Could not connect");
-            return HTTP_CONN;
+        if (ret != NSAPI_ERROR_OK) {
+          m_sock.close();
+          ERR("Could not connect");
+          return HTTP_CONN;
         }
 
         // Send request
@@ -542,41 +549,33 @@ HTTPResult HTTPClient::recv(char* buf, size_t minLen, size_t maxLen, size_t* pRe
 {
     DBG("Trying to read between %d and %d bytes", minLen, maxLen);
     size_t readLen = 0;
-
-    if (!m_sock.is_connected()) {
-        WARN("Connection was closed by server");
-        return HTTP_CLOSED; //Connection was closed by server
-    }
-
     int ret;
-    while (readLen < maxLen) {
-        if (readLen < minLen) {
-            DBG("Trying to read at most %4d bytes [Blocking] %d,%d", minLen - readLen, minLen, readLen);
-            m_sock.set_blocking(false, m_timeout);
-            ret = m_sock.receive_all(buf + readLen, minLen - readLen);
-        } else {
-            DBG("Trying to read at most %4d bytes [Not blocking] %d,%d", maxLen - readLen, maxLen, readLen);
-            m_sock.set_blocking(false, 0);
-            ret = m_sock.receive(buf + readLen, maxLen - readLen);
-        }
 
-        if (ret > 0) {
-            readLen += ret;
-        } else if ( ret == 0 ) {
-            break;
+    while (readLen < maxLen) {
+      if (readLen < minLen) {
+        DBG("Trying to read at most %4d bytes [Blocking] %d,%d", minLen - readLen, minLen, readLen);
+        m_sock.set_blocking(false);
+        m_sock.set_timeout(m_timeout);
+        ret = m_sock.recv(buf + readLen, minLen - readLen);
+      } else {
+        DBG("Trying to read at most %4d bytes [Not blocking] %d,%d", maxLen - readLen, maxLen, readLen);
+        m_sock.set_blocking(false);
+        m_sock.set_timeout(0);
+        ret = m_sock.recv(buf + readLen, maxLen - readLen);
+      }
+
+      if (ret > 0) {
+        readLen += ret;
+      } else {
+        if ((ret == NSAPI_ERROR_NO_CONNECTION) || (ret == NSAPI_ERROR_WOULD_BLOCK)) {
+          break;
         } else {
-            if (!m_sock.is_connected()) {
-                ERR("Connection error (recv returned %d)", ret);
-                *pReadLen = readLen;
-                return HTTP_CONN;
-            } else {
-                break;
-            }
+          ERR("Connection error (recv returned %d)", ret);
+          return HTTP_CONN;
         }
-        if (!m_sock.is_connected()) {
-            break;
-        }
+      }
     }
+
     DBG("Read %d bytes", readLen);
     buf[readLen] = '\0';    // DS makes it easier to see what's new.
     *pReadLen = readLen;
@@ -591,14 +590,9 @@ HTTPResult HTTPClient::send(const char* buf, size_t len) //0 on success, err cod
     DBG("send(\r\n%s,%d)", buf, len);
     size_t writtenLen = 0;
 
-    if(!m_sock.is_connected()) {
-        WARN("Connection was closed by server");
-        return HTTP_CLOSED; //Connection was closed by server
-    }
-    DBG("a");
-    m_sock.set_blocking(false, m_timeout);
-    DBG("b");
-    int ret = m_sock.send_all(buf, len);
+    m_sock.set_blocking(false);
+    m_sock.set_timeout(m_timeout);
+    int ret = m_sock.send(buf, len);
     if(ret > 0) {
         writtenLen += ret;
     } else if( ret == 0 ) {
