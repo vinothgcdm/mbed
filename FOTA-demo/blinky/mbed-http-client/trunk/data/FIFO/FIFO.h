@@ -6,10 +6,10 @@
 class FIFO {
 public:
         FIFO(char *buf, uint32_t size);
-	int read(char *buf, int len);
-	bool write(const char *buf, int len);
-	size_t get_free_bytes(void);
-	size_t get_len(void);
+	int fifo_read(char *buf, int len);
+	bool fifo_write(const char *buf, int len);
+	size_t fifo_get_free_bytes(void);
+	size_t fifo_get_len(void);
 private:
 	char *buf;
 	int head;

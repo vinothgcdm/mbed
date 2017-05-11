@@ -10,7 +10,7 @@ FIFO::FIFO(char *buf, uint32_t size)
     this->free_bytes = size;
 }
 
-int FIFO::read(char *buf, int len)
+int FIFO::fifo_read(char *buf, int len)
 {
     int i;
     int count = (this->size - this->free_bytes);
@@ -25,7 +25,7 @@ int FIFO::read(char *buf, int len)
     return i;
 }
 
-bool FIFO::write(const char *buf, int len)
+bool FIFO::fifo_write(const char *buf, int len)
 {
     int i;
 
@@ -42,12 +42,12 @@ bool FIFO::write(const char *buf, int len)
     return true;
 }
 
-size_t FIFO::get_free_bytes(void)
+size_t FIFO::fifo_get_free_bytes(void)
 {
     return this->free_bytes;
 }
 
-size_t FIFO::get_len(void)
+size_t FIFO::fifo_get_len(void)
 {
     return this->size - this->free_bytes;
 }
