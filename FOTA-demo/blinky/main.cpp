@@ -5,6 +5,8 @@
 #include "HTTPFlash.h"
 
 #define DOWNLOAD_AREA 0x40000
+#define PAGE_SIZE 512
+#define SECTOR_SIZE 4096
 
 void download_firmware(void)
 {
@@ -16,8 +18,8 @@ void download_firmware(void)
     printf("IP address is: %s\r\n", net.get_ip_address());
     printf("Fetching data from server...\r\n");
     HTTPClient http(nsapi_create_stack(&lwip_stack));
-    HTTPFlash flash(DOWNLOAD_AREA);
-    char url[] = "http://172.16.0.236/out.bin";    
+    HTTPFlash flash(DOWNLOAD_AREA, PAGE_SIZE, SECTOR_SIZE);
+    char url[] = "http://172.16.2.207/out.bin";
     int ret = http.get(url, &flash);
     if (!ret) {
         printf("Data fetched successfully...\r\n\r\n");

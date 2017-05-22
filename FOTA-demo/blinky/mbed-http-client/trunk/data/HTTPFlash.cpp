@@ -15,58 +15,45 @@
 #define INFO(x, ...)
 #endif
 
-#define PAGE_SIZE 512
-#define SECTOR_SIZE 4096
-
-HTTPFlash::HTTPFlash(uint32_t addr)
+HTTPFlash::HTTPFlash(uint32_t addr, uint32_t page_size, uint32_t sector_size)
 {
 	if (addr < (APPLICATION_ADDR + APPLICATION_SIZE))
-		ERR("Try to download on bootloader area");
+		ERR("Try to download on bootloader area [%d, %d]",
+            APPLICATION_ADDR, APPLICATION_SIZE);
 
 	this->fifo = new FIFO(buf, sizeof(buf));
     this->addr = addr;
-    DBG("Download area address: 0x%X\r\n", addr);
+    this->page_size = page_size;
+    this->sector_size = sector_size;
+    this->data = new char(this->page_size);
 }
 
 void HTTPFlash::writeReset() {}
 
-void HTTPFlash::write_success_flag(void)
-{
-    uint32_t flag[128] = {0x55CC55CC, (this->addr + 512), this->tot_len};
-    flash.program(flag, this->addr, PAGE_SIZE);
-}
-
 int HTTPFlash::write(const char* buf, size_t len)
 {
     static uint32_t byte_count = 0;
-    static uint32_t page_count = 1;  // for meta information page
+    static uint32_t page_count = 0;
     uint32_t fifo_len;
-    int ret;
-    char data[PAGE_SIZE];
 
     fifo->fifo_write(buf, len);
     byte_count += len;
 
     fifo_len = fifo->fifo_get_len();
-    if (fifo_len >= PAGE_SIZE) {
-        ret = fifo->fifo_read(data, sizeof(data));
-        DBG("Page write: %lu[0x%X] - %d bytes\r\n", page_count,
-            this->addr + (page_count * PAGE_SIZE), ret);
-        flash.program(data, this->addr + (page_count * PAGE_SIZE), PAGE_SIZE);
+    if (fifo_len >= this->page_size) {
+        fifo->fifo_read(data, this->page_size);
+        flash.program(data, this->addr + (page_count * this->page_size), this->page_size);
         page_count++;
     }
 
     /* Flush remaining all bytes */
     if (byte_count == tot_len) {
         memset(data, 0xFF, sizeof(data));
-        ret = fifo->fifo_read(data, sizeof(data));
-        DBG("Page write: %lu[0x%X] - %d bytes\r\n", page_count,
-            this->addr + (page_count * PAGE_SIZE), ret);
-        flash.program(data, this->addr + (page_count * PAGE_SIZE), PAGE_SIZE);
+        fifo->fifo_read(data, sizeof(data));
+        flash.program(data, this->addr + (page_count * this->page_size), this->page_size);
         page_count++;
-
-        DBG("All byte received\r\n");
-        write_success_flag();
+        DBG("===> %lu bytes received <===", byte_count);
+        DBG("===> %lu pages written  <===", page_count);
     }
 
     return len;
@@ -76,21 +63,17 @@ void HTTPFlash::setDataType(const char* type) {}
 void HTTPFlash::setIsChunked(bool chunked) {}
 void HTTPFlash::setDataLen(size_t len)
 {
-    uint32_t count;
-    uint32_t tmp;
+    uint32_t page_count;
 
-    DBG("Total bytes: %lu\r\n", tot_len);
-    this->tot_len = tot_len;
+    DBG("Total bytes: %d", len);
+    this->tot_len = len;
     this->flash.init();
 
     /* Erase required sector  */
-    tmp = tot_len + PAGE_SIZE;  // for meta information page
-    count = (tmp / SECTOR_SIZE) + ((tmp % SECTOR_SIZE) ? 1 : 0);
-    DBG("%lu sectors going to erase\r\n", count);
-    for (uint32_t i = 0; i < count; i++) {
-        DBG("Erasing sectors %lu [0x%X]\r\n", i,
-               this->addr + (i * SECTOR_SIZE));
-        flash.erase(this->addr + (i * SECTOR_SIZE), SECTOR_SIZE);
-    }
+    page_count = (tot_len / this->sector_size);
+    page_count += (tot_len % this->sector_size) ? 1 : 0;
+    DBG("%lu sectors going to erase", page_count);
+    if (0 != flash.erase(this->addr, page_count * this->sector_size))
+        ERR("Flash.erase failed");
 }
 
