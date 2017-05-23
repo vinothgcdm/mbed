@@ -19,7 +19,7 @@ void download_firmware(void)
     printf("Fetching data from server...\r\n");
     HTTPClient http(nsapi_create_stack(&lwip_stack));
     HTTPFlash flash(DOWNLOAD_AREA, PAGE_SIZE, SECTOR_SIZE);
-    char url[] = "http://172.16.2.207/out.bin";
+    char url[] = "http://172.16.0.236/out.bin";
     int ret = http.get(url, &flash);
     if (!ret) {
         printf("Data fetched successfully...\r\n\r\n");
@@ -39,13 +39,13 @@ int main(void)
 
     printf("=============== Blinky Application ===============\r\n");
     while (1) {
-        led = !led.read();
-        wait_ms(200);
-        // for (int i = 0; i < 10; i++) {
-        //     led = !led.read();
-        //     wait_ms(50);
-        // }
-        // wait_ms(1000);
+        // led = !led.read();
+        // wait_ms(200);
+        for (int i = 0; i < 10; i++) {
+            led = !led.read();
+            wait_ms(50);
+        }
+        wait_ms(1000);
         
         if (button.read() == 0)
             download_firmware();

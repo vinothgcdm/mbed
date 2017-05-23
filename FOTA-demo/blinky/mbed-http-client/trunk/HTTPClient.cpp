@@ -214,7 +214,7 @@ HTTPResult HTTPClient::connect(const char* url, HTTP_METH method, IHTTPDataOut* 
             return res;
         }
 
-        port = strcmp(scheme, "https") ? 8000 : 443;
+        port = strcmp(scheme, "https") ? 80 : 443;
 
         DBG("Scheme: %s", scheme);
         DBG("Host: %s", host);
@@ -566,9 +566,7 @@ HTTPResult HTTPClient::recv(char* buf, size_t minLen, size_t maxLen, size_t* pRe
 
       if (ret > 0) {
         readLen += ret;
-      } else if (ret == 0) {
-          break;
-      }else {
+      } else {
         if ((ret == NSAPI_ERROR_NO_CONNECTION) || (ret == NSAPI_ERROR_WOULD_BLOCK)) {
           break;
         } else {

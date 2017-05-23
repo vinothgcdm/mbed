@@ -18,7 +18,7 @@
 HTTPFlash::HTTPFlash(uint32_t addr, uint32_t page_size, uint32_t sector_size)
 {
 	if (addr < (APPLICATION_ADDR + APPLICATION_SIZE))
-		ERR("Try to download on bootloader area [%d, %d]",
+		ERR("Download address is wrong [%d, %d]",
             APPLICATION_ADDR, APPLICATION_SIZE);
 
 	this->fifo = new FIFO(buf, sizeof(buf));
@@ -42,18 +42,21 @@ int HTTPFlash::write(const char* buf, size_t len)
     fifo_len = fifo->fifo_get_len();
     if (fifo_len >= this->page_size) {
         fifo->fifo_read(data, this->page_size);
-        flash.program(data, this->addr + (page_count * this->page_size), this->page_size);
+        flash.program(data,
+                      this->addr + (page_count * this->page_size),
+                      this->page_size);
         page_count++;
+    } else if (byte_count == tot_len) {
+        memset(data, 0xFF, this->page_size);
+        fifo->fifo_read(data, fifo_len);
+        flash.program(data,
+                      this->addr + (page_count * this->page_size),
+                      this->page_size);
     }
 
-    /* Flush remaining all bytes */
     if (byte_count == tot_len) {
-        memset(data, 0xFF, sizeof(data));
-        fifo->fifo_read(data, sizeof(data));
-        flash.program(data, this->addr + (page_count * this->page_size), this->page_size);
-        page_count++;
-        DBG("===> %lu bytes received <===", byte_count);
-        DBG("===> %lu pages written  <===", page_count);
+        DBG("%lu bytes received", byte_count);
+        DBG("Download Success");
     }
 
     return len;
@@ -65,6 +68,7 @@ void HTTPFlash::setDataLen(size_t len)
 {
     uint32_t page_count;
 
+    INFO("Downloading firmware ...");
     DBG("Total bytes: %d", len);
     this->tot_len = len;
     this->flash.init();
@@ -72,7 +76,6 @@ void HTTPFlash::setDataLen(size_t len)
     /* Erase required sector  */
     page_count = (tot_len / this->sector_size);
     page_count += (tot_len % this->sector_size) ? 1 : 0;
-    DBG("%lu sectors going to erase", page_count);
     if (0 != flash.erase(this->addr, page_count * this->sector_size))
         ERR("Flash.erase failed");
 }
